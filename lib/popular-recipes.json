@@ -697,17 +697,17 @@
      {
       "title": "Chop the vegetables",
       "description": "Cut the vegetables: parsley roots, carrots, celery root, onion, and leek into pieces.",
-      "at": 228
+      "at": 148
      },
      {
       "title": "Season and roast the vegetables",
       "description": "Season the chopped vegetables with pepper, drizzle with oil, mix, and transfer them to a baking sheet.",
-      "at": 298
+      "at": null
      },
      {
       "title": "Bake vegetables",
       "description": "Bake the vegetables in the oven at 180-200 degrees Celsius until they brown and caramelize.",
-      "at": 310
+      "at": 190
      },
      {
       "title": "Heat the broth",
@@ -717,22 +717,22 @@
      {
       "title": "Skim the broth",
       "description": "Gently skim the impurities from the surface of the simmering broth.",
-      "at": 336
+      "at": 216
      },
      {
       "title": "Add roasted vegetables",
       "description": "Add the roasted vegetables into the pot with the broth.",
-      "at": 352
+      "at": 232
      },
      {
       "title": "Add spices",
       "description": "Add allspice berries and bay leaves to the pot.",
-      "at": 412
+      "at": 252
      },
      {
       "title": "Simmer the broth",
       "description": "Cook the broth slowly on low heat for a few hours.",
-      "at": 427
+      "at": 267
      }
     ],
     "notes": [
@@ -956,27 +956,27 @@
     {
      "title": "Dodanie cebuli",
      "description": "Obierz cebulę i zetrzyj ją na tarce bezpośrednio do naczynia ze startymi ziemniakami.",
-     "at": 125
+     "at": 85
     },
     {
      "title": "Odsączenie nadmiaru soku",
      "description": "Jeśli masa ziemniaczana z cebulą puściła dużo soku, odciśnij go i odlej.",
-     "at": 138
+     "at": 98
     },
     {
      "title": "Dodanie pozostałych składników",
      "description": "Do przygotowanej masy dodaj jajka, mąkę pszenną, sól oraz pieprz.",
-     "at": 145
+     "at": 105
     },
     {
      "title": "Wymieszanie masy",
      "description": "Wszystkie składniki dokładnie wymieszaj. Jeśli masa okaże się zbyt rzadka, wmieszaj dodatkową czubatą łyżkę mąki pszennej.",
-     "at": 218
+     "at": 138
     },
     {
      "title": "Smażenie placków",
      "description": "Na patelni rozgrzej oliwę z oliwek. Nakładaj łyżką porcje ciasta, formując placki, i smaż je z obu stron, aż będą złociste i chrupiące.",
-     "at": 239
+     "at": 159
     }
    ],
    "notes": [
@@ -1155,22 +1155,22 @@
     {
      "title": "Ubijanie białek",
      "description": "W czystej misie zacznij ubijać 9 białek na szybkich obrotach przez około minutę, aż zaczną się pienić, a następnie zmniejsz obroty na średnie.",
-     "at": 148
+     "at": 108
     },
     {
      "title": "Dodawanie cukru",
      "description": "Gdy piana zacznie robić się sztywna, powoli dodawaj po łyżce cukier, cały czas ubijając pianę na niskich lub średnich obrotach.",
-     "at": 213
+     "at": 133
     },
     {
      "title": "Mieszanie składników masy serowej",
      "description": "W osobnej, dużej misce połącz ser sernikowy, serki danio, 6 żółtek, cukry waniliowe, budynie w proszku, mleko oraz olej. Dokładnie wymieszaj całość ręcznie za pomocą trzepaczki.",
-     "at": 334
+     "at": 214
     },
     {
      "title": "Łączenie masy serowej z pianą",
      "description": "Rzadką masę serową przelej do ubitej piany z białek. Całość dokładnie i delikatnie wymieszaj mikserem z mieszadłem typu K lub ręcznie trzepaczką na jednolitą, puszystą masę.",
-     "at": 427
+     "at": 267
     },
     {
      "title": "Przepasanie masy na spód",

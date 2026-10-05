@@ -10,9 +10,9 @@ process.env.GEMINI_API_KEY = 'test-only-key';
 const output = { isRecipe: true, title: 'Makaron', description: 'Makaron z cytryną.',
   servings: null, servingsEvidence: '', time: '15 minut', timeEvidence: '',
   ingredients: [{ name: 'makaron', amount: '200 g', evidence: '200 grams of pasta' }, { name: 'cytryna', amount: '2 sztuki', evidence: '' }],
-  steps: [{ title: 'Połącz składniki', description: 'Dodaj sok z cytryny do makaronu.', at: 42, atEvidence: 'Autor wyciska cytrynę do makaronu.' }], notes: [] };
+  steps: [{ title: 'Połącz składniki', description: 'Dodaj sok z cytryny do makaronu.', at: '0:42', atEvidence: 'Autor wyciska cytrynę do makaronu.' }], notes: [] };
 const interaction = value => ({ status: 'completed', steps: [{ type: 'thought' }, { type: 'model_output', content: [{ type: 'text', text: JSON.stringify(value) }] }] });
-const accepted = { category: 'cooking', hasIngredients: true, hasPreparation: true, confidence: 0.97, durationSeconds: 180, observations: [{ at: 12, evidence: 'Autor gotuje makaron w garnku.' }, { at: 42, evidence: 'Autor dodaje cytrynę do makaronu.' }] };
+const accepted = { category: 'cooking', hasIngredients: true, hasPreparation: true, confidence: 0.97, duration: '3:00', observations: [{ at: '0:12', evidence: 'Autor gotuje makaron w garnku.' }, { at: '0:42', evidence: 'Autor dodaje cytrynę do makaronu.' }] };
 const responseFor = init => Response.json(interaction(JSON.parse(init.body).response_format.schema.properties.category ? accepted : output));
 const request = (url, options = {}) => new Request('https://cooking-tube.example/api/recipe', {
   method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://cooking-tube.example', 'Accept-Language': 'pl-PL' }, body: JSON.stringify({ url }), ...options,
@@ -132,7 +132,7 @@ test('rejects non-cooking, uncertain and incomplete videos before recipe generat
     { ...accepted, hasPreparation: false },
     { ...accepted, confidence: 0.6 },
     { ...accepted, observations: [] },
-    { ...accepted, durationSeconds: 3700 },
+    { ...accepted, duration: '1:01:40' },
   ]) {
     const provider = t.mock.method(globalThis, 'fetch', async () => Response.json(interaction(assessment)));
     const response = await POST(request('https://youtu.be/rejected001'));
@@ -144,15 +144,15 @@ test('rejects non-cooking, uncertain and incomplete videos before recipe generat
 
 test('keeps only chronological, evidenced timestamps inside the video duration', () => {
   const steps = [
-    { title: 'Start', description: 'Rozpocznij.', at: 0, atEvidence: 'Autor pokazuje przygotowanie składników.' },
-    { title: 'Gotuj', description: 'Gotuj.', at: 42.9, atEvidence: 'Autor wkłada makaron do gotującej wody.' },
-    { title: 'Błędny', description: 'Cofnięty znacznik.', at: 12, atEvidence: 'Opis widocznej czynności w kuchni.' },
-    { title: 'Bez dowodu', description: 'Brak obserwacji.', at: 70, atEvidence: '' },
+    { title: 'Start', description: 'Rozpocznij.', at: '0:00', atEvidence: 'Autor pokazuje przygotowanie składników.' },
+    { title: 'Gotuj', description: 'Gotuj.', at: '0:42.9', atEvidence: 'Autor wkłada makaron do gotującej wody.' },
+    { title: 'Błędny', description: 'Cofnięty znacznik.', at: '0:12', atEvidence: 'Opis widocznej czynności w kuchni.' },
+    { title: 'Bez dowodu', description: 'Brak obserwacji.', at: '1:10', atEvidence: '' },
   ];
   const recipe = formatVideoRecipe(JSON.stringify({ ...output, steps }), 'SwDJi_PB-wY', 180);
   assert.deepEqual(recipe.steps.map(step => step.at), [0, 42, null, null]);
   // One moment past the end shows the timeline is invented, so every timestamp is dropped.
-  const past = formatVideoRecipe(JSON.stringify({ ...output, steps: [...steps, { title: 'Po filmie', description: 'Poza zakresem.', at: 180, atEvidence: 'Opis widocznej czynności w kuchni.' }] }), 'SwDJi_PB-wY', 180);
+  const past = formatVideoRecipe(JSON.stringify({ ...output, steps: [...steps, { title: 'Po filmie', description: 'Poza zakresem.', at: '3:00', atEvidence: 'Opis widocznej czynności w kuchni.' }] }), 'SwDJi_PB-wY', 180);
   assert.ok(past.steps.every(step => step.at === null));
   const untrusted = formatVideoRecipe(JSON.stringify({ ...output, steps }), 'SwDJi_PB-wY', 180, false);
   assert.ok(untrusted.steps.every(step => step.at === null));
@@ -179,10 +179,42 @@ test('English locale instructs generation in English and is isolated from the Po
 test('keeps a cooking video with an invented timeline but distrusts its timestamps', async () => {
   const { assessVideo } = await import('../lib/video-assessment.ts');
   // The real case: a 196 s cake video with observations at 207 s and 244 s.
-  const observations = [{ at: 100, evidence: 'Wbijanie jajek do miski i miksowanie z cukrem.' }, { at: 244, evidence: 'Wlewanie ciasta do formy keksowej.' }];
-  assert.deepEqual(assessVideo(JSON.stringify({ ...accepted, durationSeconds: 196, observations }), 196), { durationSeconds: 196, timelineTrusted: false });
+  const observations = [{ at: '1:40', evidence: 'Wbijanie jajek do miski i miksowanie z cukrem.' }, { at: '4:04', evidence: 'Wlewanie ciasta do formy keksowej.' }];
+  assert.deepEqual(assessVideo(JSON.stringify({ ...accepted, duration: '3:16', observations }), 196), { durationSeconds: 196, timelineTrusted: false });
   // The real length wins over the model's estimate, and a large mismatch also distrusts the timeline.
-  assert.deepEqual(assessVideo(JSON.stringify({ ...accepted, durationSeconds: 600 }), 180), { durationSeconds: 180, timelineTrusted: false });
-  assert.deepEqual(assessVideo(JSON.stringify({ ...accepted, durationSeconds: 185 }), 180), { durationSeconds: 180, timelineTrusted: true });
-  assert.throws(() => assessVideo(JSON.stringify({ ...accepted, observations: [{ at: 50, evidence: 'Mieszanie ciasta w misce.' }, { at: 50, evidence: 'Mieszanie ciasta w misce.' }] })));
+  assert.deepEqual(assessVideo(JSON.stringify({ ...accepted, duration: '10:00' }), 180), { durationSeconds: 180, timelineTrusted: false });
+  assert.deepEqual(assessVideo(JSON.stringify({ ...accepted, duration: '3:05' }), 180), { durationSeconds: 180, timelineTrusted: true });
+  // A length or moment written as plain seconds is the confusion this format prevents, so the timeline is not trusted.
+  assert.deepEqual(assessVideo(JSON.stringify({ ...accepted, duration: '180' }), 180), { durationSeconds: 180, timelineTrusted: false });
+  assert.deepEqual(assessVideo(JSON.stringify({ ...accepted, observations: [{ at: '12', evidence: 'Autor gotuje makaron w garnku.' }, accepted.observations[1]] }), 180), { durationSeconds: 180, timelineTrusted: false });
+  assert.deepEqual(assessVideo(JSON.stringify({ ...accepted, duration: 'około 3 minut' })), { durationSeconds: null, timelineTrusted: false });
+  assert.throws(() => assessVideo(JSON.stringify({ ...accepted, observations: [{ at: '0:50', evidence: 'Mieszanie ciasta w misce.' }, { at: '0:50', evidence: 'Mieszanie ciasta w misce.' }] })));
+});
+
+test('reads step moments only from player clock strings', async () => {
+  const { parseMoment } = await import('../lib/video-moment.ts');
+  assert.deepEqual(['0:09', '1:25', '01:25', '12:30', '1:02:05', '2:39.6'].map(parseMoment), [9, 85, 85, 750, 3725, 159]);
+  // 125 can mean 125 s or 1:25; the placki ziemniaczane recipe had both kinds in one answer.
+  assert.deepEqual(['125', '2.05', '2:75', '1:5', '', 'około 2 minut'].map(parseMoment), [null, null, null, null, null, null]);
+  const step = at => ({ title: 'Krok', description: 'Opis kroku.', at, atEvidence: 'Autor ściera ziemniaki na tarce.' });
+  const recipe = formatVideoRecipe(JSON.stringify({ ...output, steps: [step('0:44'), step('1:25'), step(125), step('2.05'), step('2:39')] }), 'SwDJi_PB-wY', 255);
+  assert.deepEqual(recipe.steps.map(item => item.at), [44, 85, null, null, 159]);
+  // A chatty value loses only its own moment, not the whole recipe.
+  const chatty = formatVideoRecipe(JSON.stringify({ ...output, steps: [step('0:44'), step('około 2:05, gdy autor dodaje cebulę do ziemniaków')] }), 'SwDJi_PB-wY', 255);
+  assert.deepEqual(chatty.steps.map(item => item.at), [44, null]);
+});
+
+test('tells the model the real video length before it marks step moments', async t => {
+  process.env.YOUTUBE_LENGTH_LOOKUP = 'on';
+  t.after(() => { process.env.YOUTUBE_LENGTH_LOOKUP = 'off'; });
+  let instruction = '';
+  t.mock.method(globalThis, 'fetch', async (url, init) => {
+    if (String(url).startsWith('https://www.youtube.com/watch')) return new Response('<script>{"videoDetails":{"lengthSeconds":"255"}}</script>');
+    const body = JSON.parse(init.body);
+    if (!body.response_format.schema.properties.category) instruction = body.system_instruction;
+    return responseFor(init);
+  });
+  const recipe = await generateRecipe('SwDJi_PB-wY');
+  assert.match(instruction, /Film trwa 4:15\./);
+  assert.equal(recipe.steps[0].at, null, 'the model guessed 3:00 for a 4:15 video, so its timeline is not trusted');
 });

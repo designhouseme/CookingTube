@@ -89,8 +89,13 @@ unsafe or uncertain material stops before the recipe-generation call. Videos
 over one hour are rejected. Both calls share a two-minute provider deadline.
 
 The second call produces the recipe in the requested language. Quantities need
-supporting quotations. Step timestamps need an observation, chronological order
-and a position inside the assessed duration; invalid or missing timestamps become
+supporting quotations. Both calls write moments and the video length as player
+clock strings (`M:SS`, `H:MM:SS`), parsed by `lib/video-moment.ts`; asked for
+plain seconds, the model wrote 1:25 as `125` in some answers and as `85` in
+others. A bare number or an impossible clock such as `2:75` is never read as a
+moment. The real length from YouTube is passed to the recipe call. Step
+timestamps need an observation, chronological order and a position inside the
+assessed duration; invalid or missing timestamps become
 `null`. Timestamps come from model observations, not independently verified
 captions, and can be approximate. The player additionally checks the actual video
 duration before seeking. Private/unavailable videos and disabled embedding have

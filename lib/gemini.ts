@@ -1,6 +1,7 @@
 import { formatVideoRecipe, videoRecipeInstructions, videoRecipeSchema } from "./recipe-format.ts";
 import { limitedText } from "./video.ts";
 import { assessVideo, assessmentInstructions, assessmentSchema } from "./video-assessment.ts";
+import { momentClock } from "./video-moment.ts";
 import { youtubeLength } from "./youtube-length.ts";
 
 import type { AppLocale } from "./locale.ts";
@@ -35,9 +36,11 @@ export async function generateRecipe(id: string, signal?: AbortSignal, locale: A
   // The real length comes from YouTube in parallel; it checks the model's timeline.
   const [verdict, realLength] = await Promise.all([videoInteraction(id, assessmentInstructions, assessmentSchema, 1800, combined), youtubeLength(id, combined)]);
   const assessment = assessVideo(verdict, realLength);
-  const instructions = locale === "pl" ? videoRecipeInstructions : videoRecipeInstructions.replace(/PO POLSKU/gi, "po angielsku").replace(/polskie nazwy/g, "angielskie nazwy") + "\nAll user-facing recipe content MUST be in English: title, description, ingredients, amounts, steps and notes. Keep evidence in the original language.";
+  const localized = locale === "pl" ? videoRecipeInstructions : videoRecipeInstructions.replace(/PO POLSKU/gi, "po angielsku").replace(/polskie nazwy/g, "angielskie nazwy") + "\nAll user-facing recipe content MUST be in English: title, description, ingredients, amounts, steps and notes. Keep evidence in the original language.";
+  // With the real length the model can check its own moments against the end of the video.
+  const instructions = realLength ? `${localized}\nFilm trwa ${momentClock(realLength)}. Każdy moment at musi być wcześniejszy.` : localized;
   const output = await videoInteraction(id, instructions, videoRecipeSchema, 6000, combined);
-  return { ...formatVideoRecipe(output, id, assessment.durationSeconds, assessment.timelineTrusted), language: locale };
+  return { ...formatVideoRecipe(output, id, assessment.durationSeconds ?? undefined, assessment.timelineTrusted), language: locale };
 }
 
 async function videoInteraction(id: string, instructions: string, schema: object, maxTokens: number, signal: AbortSignal) {
